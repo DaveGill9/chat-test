@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { EvalResult } from "./types.js";
+import type { EvalResult } from "./types.ts";
 
 const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) throw new Error("Missing OPENAI_API_KEY env var");

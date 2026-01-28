@@ -24,3 +24,5 @@ Thumbs.db
 
 # Misc
 coverage/
+tests.csv
+tests-example.csv

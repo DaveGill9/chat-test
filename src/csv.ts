@@ -1,6 +1,6 @@
 import fs from "fs";
 import Papa from "papaparse";
-import { EvalRow } from './types.js';
+import type { EvalRow } from "./types.ts";
 
 export function loadCsv(path: string): EvalRow[] {
     const text = fs.readFileSync(path, 'utf-8');
