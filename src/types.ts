@@ -7,7 +7,7 @@ export type EvalRow = {
     rationale?: string;
 };
 
-export type JudgeResult = {
+export type EvalResult = {
     score: number;
     rationale: string;
 };
