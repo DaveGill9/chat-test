@@ -1,0 +1,19 @@
+{
+    "name": "chat-test",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "eval": "ts-node src/run.ts"
+    },
+    "dependencies": {
+        "dotenv": "^16.4.5",
+        "node-fetch": "^3.3.2",
+        "openai": "^4.0.0",
+        "papaparse": "^5.4.1"
+    },
+    "devDependencies": {
+        "ts-node": "^10.9.2",
+        "typescript": "^5.3.3"
+    }
+}
