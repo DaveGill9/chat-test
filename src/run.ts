@@ -2,8 +2,16 @@ import "dotenv/config";
 import fs from "fs";
 import path from "path";
 import { loadFile, writeResults } from "./file.ts";
-import { callEndpoint } from "./http.ts";
+import { callEndpoint, sendFollowup, getExtras } from "./http.ts";
 import { evaluate } from "./eval.ts";
+import { decideFollowup } from "./followup.ts";
+
+const MAX_FOLLOWUP_TURNS = Math.max(
+    1,
+    parseInt(process.env.CHATBOT_MAX_FOLLOWUP_TURNS || "2", 10)
+);
+const RESPONSE_SEPARATOR =
+    process.env.CHATBOT_RESPONSE_SEPARATOR || "\n---\n";
 
 const FILES_DIR = "files";
 
@@ -36,7 +44,38 @@ async function main() {
         console.log(`Test ${row.id}: calling chatbot`);
 
         try {
-            const actual = await callEndpoint(row);
+            const responses: string[] = [];
+            let chat = await callEndpoint(row);
+            responses.push(chat.answer);
+            let threadId = chat.threadId;
+
+            for (let turn = 1; turn < MAX_FOLLOWUP_TURNS; turn++) {
+                const decision = await decideFollowup({
+                    input: row.input,
+                    expected: row.expected,
+                    latestReply: chat.answer,
+                });
+
+                if (!decision.needsFollowup || !decision.followupMessage) {
+                    break;
+                }
+
+                console.log(
+                    `  → Follow-up ${turn}: ${decision.followupMessage.substring(0, 50)}...`
+                );
+
+                chat = await sendFollowup(
+                    decision.followupMessage,
+                    threadId,
+                    getExtras(row)
+                );
+                responses.push(chat.answer);
+                if (chat.threadId) {
+                    threadId = chat.threadId;
+                }
+            }
+
+            const actual = responses.join(RESPONSE_SEPARATOR);
             row.actual = actual;
 
             const result = await evaluate(row.input, row.expected, actual);
