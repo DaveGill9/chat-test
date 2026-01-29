@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { loadCsv, writeCsv } from "./csv.ts";
+import { loadFile, writeCsv } from "./csv.ts";
 import { callEndpoint } from "./http.ts";
 import { evaluate } from "./eval.ts";
 
@@ -10,7 +10,7 @@ if (!csvPath) {
 }
 
 async function main() {
-    const rows = loadCsv(csvPath);
+    const rows = loadFile(csvPath);
 
     for (const row of rows) {
         console.log(`Test ${row.id}: calling chatbot`);

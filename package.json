@@ -11,10 +11,12 @@
         "dotenv": "^16.4.5",
         "node-fetch": "^3.3.2",
         "openai": "^4.0.0",
-        "papaparse": "^5.4.1"
+        "papaparse": "^5.4.1",
+        "xlsx": "^0.18.5"
     },
     "devDependencies": {
         "@types/papaparse": "^5.5.2",
+        "@types/xlsx": "^0.0.35",
         "ts-node": "^10.9.2",
         "typescript": "^5.3.3"
     }

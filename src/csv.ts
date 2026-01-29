@@ -1,9 +1,20 @@
 import fs from "fs";
 import Papa from "papaparse";
+import XLSX from "xlsx";
 import type { EvalRow } from "./types.ts";
 
-export function loadCsv(path: string): EvalRow[] {
-    const text = fs.readFileSync(path, 'utf-8');
+export function loadFile(path: string): EvalRow[] {
+    const ext = path.toLowerCase().split(".").pop();
+
+    if (ext === "csv") {
+        return loadXlsx(path);
+    }
+
+    return loadCsv(path);
+}
+
+function loadCsv(path: string): EvalRow[] {
+    const text = fs.readFileSync(path, "utf-8");
 
     const result = Papa.parse(text, {
         header: true,
@@ -16,11 +27,37 @@ export function loadCsv(path: string): EvalRow[] {
 
     const rows = result.data as EvalRow[];
 
+    validateRequiredFields(rows, "CSV");
+
+    return rows;
+}
+
+function validateRequiredFields(rows: EvalRow[], source: string): void {
     for (const row of rows) {
         if (!row.id || !row.input || !row.expected) {
-            throw new Error("CSV row missing required fields");
+            throw new Error(
+                `${source} row missing required fields (id, input, expected): ` +
+                JSON.stringify(row)
+            );
         }
     }
+}
+
+function loadXlsx(path: string): EvalRow[] {
+    const workbook = XLSX.readFile(path);
+    const sheetName = workbook.SheetNames[0];
+
+    if (!sheetName) {
+        throw new Error("XLSX file has no sheets");
+    }
+
+    const worksheet = workbook.Sheets[sheetName];
+
+    const rows = XLSX.utils.sheet_to_json(worksheet, {
+        defval: "",
+    }) as EvalRow[];
+
+    validateRequiredFields(rows, "XLSX");
 
     return rows;
 }

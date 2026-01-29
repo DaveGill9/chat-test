@@ -11,7 +11,7 @@ const ANSWER_FIELD = process.env.CHATBOT_ANSWER_FIELD || "answer";
 
 export async function callEndpoint(row: EvalRow): Promise<string> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    const timeout = setTimeout(() => controller.abort(), 60000);
 
     try {
         const {
