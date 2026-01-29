@@ -1,16 +1,28 @@
 import "dotenv/config";
-import { loadFile, writeCsv } from "./csv.ts";
+import path from "path";
+import { loadFile, writeResults } from "./file.ts";
 import { callEndpoint } from "./http.ts";
 import { evaluate } from "./eval.ts";
 
-const csvPath = process.argv[2];
-if (!csvPath) {
-    console.error("Usage: npm run eval -- path/to/tests.csv");
+const inputPath = process.argv[2];
+const outputPathArg = process.argv[3];
+
+if (!inputPath) {
+    console.error("Usage: npm run eval -- path/to/tests.(csv|xlsx) [path/to/results.(csv|xlsx)]");
     process.exit(1);
 }
 
+const inputExt = path.extname(inputPath) || ".csv";
+const defaultOutputName =
+    `${path.basename(inputPath, inputExt)}-results${inputExt}`;
+const outputPath =
+    outputPathArg || path.join(path.dirname(inputPath), defaultOutputName);
+
 async function main() {
-    const rows = loadFile(csvPath);
+    const rows = loadFile(inputPath);
+
+    console.log(`Loaded ${rows.length} tests from ${inputPath}`);
+    console.log(`Results will be written to ${outputPath}\n`);
 
     for (const row of rows) {
         console.log(`Test ${row.id}: calling chatbot`);
@@ -32,8 +44,8 @@ async function main() {
         }
     }
 
-    writeCsv(csvPath, rows);
-    console.log(`Done. Results written to ${csvPath}`);
+    writeResults(outputPath, rows);
+    console.log(`\nDone. Results written to ${outputPath}`);
 }
 
 main().catch((e) => {
