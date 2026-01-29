@@ -1,8 +1,11 @@
 import "dotenv/config";
+import fs from "fs";
 import path from "path";
 import { loadFile, writeResults } from "./file.ts";
 import { callEndpoint } from "./http.ts";
 import { evaluate } from "./eval.ts";
+
+const FILES_DIR = "files";
 
 const inputPath = process.argv[2];
 const outputPathArg = process.argv[3];
@@ -16,10 +19,15 @@ const inputExt = path.extname(inputPath) || ".csv";
 const defaultOutputName =
     `${path.basename(inputPath, inputExt)}-results${inputExt}`;
 const outputPath =
-    outputPathArg || path.join(path.dirname(inputPath), defaultOutputName);
+    outputPathArg || path.join(FILES_DIR, defaultOutputName);
 
 async function main() {
     const rows = loadFile(inputPath);
+
+    const outDir = path.dirname(outputPath);
+    if (outDir) {
+        fs.mkdirSync(outDir, { recursive: true });
+    }
 
     console.log(`Loaded ${rows.length} tests from ${inputPath}`);
     console.log(`Results will be written to ${outputPath}\n`);

@@ -6,7 +6,7 @@ import type { EvalRow } from "./types.ts";
 export function loadFile(path: string): EvalRow[] {
     const ext = path.toLowerCase().split(".").pop() || "";
 
-    if (ext === "csv") {
+    if (ext === "xlsx" || ext === "xls") {
         return loadXlsx(path);
     }
 
