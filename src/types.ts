@@ -4,10 +4,11 @@ export type EvalRow = {
     expected: string;
     actual?: string;
     score?: number;
-    rationale?: string;
+    reasoning?: string;
+    [key: string]: unknown;
 };
 
 export type EvalResult = {
     score: number;
-    rationale: string;
+    reasoning: string;
 };

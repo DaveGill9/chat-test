@@ -21,13 +21,13 @@ async function main() {
 
             const result = await evaluate(row.input, row.expected, actual);
             row.score = result.score;
-            row.rationale = result.rationale;
+            row.rationale = result.reasoning;
 
             console.log(`Test ${row.id}: score=${row.score}`);
         } catch (err: any) {
             row.actual = row.actual ?? "";
             row.score = 0;
-            row.rationale = `ERROR: ${err?.message ?? String(err)}`;
+            row.reasoning = `ERROR: ${err?.message ?? String(err)}`;
             console.error(`Test ${row.id} failed`, err);
         }
     }

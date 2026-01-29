@@ -27,7 +27,7 @@ ${actual}
 Return JSON ONLY:
 {
   "score": number,     // 0 to 1
-  "rationale": string // max 2 sentences
+  "reasoning": string // max 2 sentences
 }
 
 Scoring guide:
@@ -55,6 +55,6 @@ Scoring guide:
 
     return {
         score: Math.max(0, Math.min(1, parsed.score)),
-        rationale: parsed.rationale
+        reasoning: parsed.reasoning
     };
 }
