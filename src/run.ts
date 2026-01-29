@@ -16,12 +16,12 @@ async function main() {
         console.log(`Test ${row.id}: calling chatbot`);
 
         try {
-            const actual = await callEndpoint(row.input);
+            const actual = await callEndpoint(row);
             row.actual = actual;
 
             const result = await evaluate(row.input, row.expected, actual);
             row.score = result.score;
-            row.rationale = result.reasoning;
+            row.reasoning = result.reasoning;
 
             console.log(`Test ${row.id}: score=${row.score}`);
         } catch (err: any) {
