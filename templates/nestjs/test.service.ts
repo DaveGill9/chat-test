@@ -10,14 +10,12 @@ export class TestService {
 
     async handleSync(request: {
         message: string;
-        audience?: string;
         threadId?: string;
     }) {
         const userId = "eval-user";
         const chatRequest = {
             _id: nanoid(),
             query: request.message,
-            audience: request.audience,
             threadId: request.threadId,
         };
 

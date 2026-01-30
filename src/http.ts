@@ -1,3 +1,4 @@
+import { ClientSecretCredential } from "@azure/identity";
 import fetch from "node-fetch";
 import type { EvalRow } from "./types.ts";
 
@@ -9,6 +10,29 @@ const endpointUrl: string = ENDPOINT_URL;
 const INPUT_FIELD = process.env.CHATBOT_FIELD || "message";
 const ANSWER_FIELD = process.env.CHATBOT_ANSWER_FIELD || "answer";
 const THREAD_ID_FIELD = process.env.CHATBOT_THREAD_ID_FIELD || "threadId";
+
+/** Entra ID: required. Endpoints can stay protected; eval sends Bearer token. */
+const AZURE_TENANT_ID = process.env.AZURE_TENANT_ID;
+const AZURE_CLIENT_ID = process.env.AZURE_CLIENT_ID;
+const AZURE_CLIENT_SECRET = process.env.AZURE_CLIENT_SECRET;
+const AZURE_SCOPE = process.env.AZURE_SCOPE || "https://graph.microsoft.com/.default";
+
+if (!AZURE_TENANT_ID || !AZURE_CLIENT_ID || !AZURE_CLIENT_SECRET) {
+    throw new Error(
+        "Entra ID is required. Set AZURE_TENANT_ID, AZURE_CLIENT_ID, and AZURE_CLIENT_SECRET in .env"
+    );
+}
+
+const credential = new ClientSecretCredential(
+    AZURE_TENANT_ID,
+    AZURE_CLIENT_ID,
+    AZURE_CLIENT_SECRET
+);
+
+async function getAccessToken(): Promise<string> {
+    const token = await credential.getToken(AZURE_SCOPE);
+    return token.token;
+}
 
 export type ChatResponse = {
     answer: string;
@@ -41,10 +65,16 @@ async function post(
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 60000);
 
+    const token = await getAccessToken();
+    const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+    };
+
     try {
         const res = await fetch(endpointUrl, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers,
             body: JSON.stringify(body),
             signal: controller.signal,
         });
