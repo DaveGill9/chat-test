@@ -1,11 +1,11 @@
 import { Module } from "@nestjs/common";
 import { TestController } from "./test.controller";
 import { TestService } from "./test.service";
-// Uncomment and fix path when copying to your project:
+// CHANGE: Uncomment and set path to your chat module
 // import { ChatModule } from "../chat/chat.module";
 
 @Module({
-    // Add ChatModule to imports after uncommenting the import above:
+    // CHANGE: Add your chat module here after uncommenting the import above
     imports: [],
     controllers: [TestController],
     providers: [TestService],
