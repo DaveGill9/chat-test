@@ -1,4 +1,5 @@
 import fetch from "node-fetch";
+import { randomUUID } from "crypto";
 import type { EvalRow } from "./types.ts";
 
 const ENDPOINT_URL = process.env.CHATBOT_URL;
@@ -9,6 +10,7 @@ const endpointUrl: string = ENDPOINT_URL;
 const INPUT_FIELD = process.env.CHATBOT_FIELD || "message";
 const ANSWER_FIELD = process.env.CHATBOT_ANSWER_FIELD || "answer";
 const THREAD_ID_FIELD = process.env.CHATBOT_THREAD_ID_FIELD || "threadId";
+const USER_ID_FIELD = process.env.CHATBOT_USER_ID_FIELD || "userId";
 
 // API Key authentication
 const apiKeyRaw = process.env.EVAL_API_KEY;
@@ -20,7 +22,12 @@ const API_KEY: string = apiKeyRaw;
 export type ChatResponse = {
     answer: string;
     threadId?: string;
+    userId?: string;
 };
+
+export function generateUserId(): string {
+    return randomUUID();
+}
 
 function parseResponse(text: string): ChatResponse {
     try {
@@ -33,16 +40,11 @@ function parseResponse(text: string): ChatResponse {
         const threadId =
             json?.[THREAD_ID_FIELD] ?? json?.threadId;
 
-        // Debug: log what we're extracting
-        console.log(`  [DEBUG] Raw response keys: ${Object.keys(json).join(", ")}`);
-        console.log(`  [DEBUG] Looking for field "${ANSWER_FIELD}", found: ${typeof answer === "string" ? answer.substring(0, 80) + "..." : "NOT A STRING"}`);
-
         return {
             answer: typeof answer === "string" ? answer : JSON.stringify(json),
             threadId: typeof threadId === "string" ? threadId : undefined,
         };
     } catch {
-        console.log(`  [DEBUG] Failed to parse JSON, raw text: ${text.substring(0, 100)}...`);
         return { answer: text };
     }
 }
@@ -73,7 +75,7 @@ async function post(
     }
 }
 
-/** Extract extra row columns (e.g. audience) to send with every request. */
+// Extract extra row columns
 export function getExtras(row: EvalRow): Record<string, unknown> {
     const {
         id,
@@ -87,28 +89,27 @@ export function getExtras(row: EvalRow): Record<string, unknown> {
     return extras;
 }
 
-/**
- * Send the initial message. Returns answer and optional threadId for follow-ups.
- */
-export async function callEndpoint(row: EvalRow): Promise<ChatResponse> {
+// Send the initial message
+export async function callEndpoint(row: EvalRow, userId: string): Promise<ChatResponse> {
     const body = {
         [INPUT_FIELD]: row.input,
+        [USER_ID_FIELD]: userId,
         ...getExtras(row),
     };
 
     return post(body);
 }
 
-/**
- * Send a follow-up message in the same conversation (if backend supports threadId).
- */
+// Send a follow-up message in the same convo
 export async function sendFollowup(
     message: string,
     threadId: string | undefined,
+    userId: string,
     extras: Record<string, unknown>
 ): Promise<ChatResponse> {
     const body: Record<string, unknown> = {
         [INPUT_FIELD]: message,
+        [USER_ID_FIELD]: userId,
         ...extras,
     };
 
