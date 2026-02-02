@@ -6,6 +6,13 @@ import { callEndpoint, sendFollowup, getExtras } from "./http.ts";
 import { evaluate } from "./eval.ts";
 import { decideFollowup } from "./followup.ts";
 
+// Delay between API calls to avoid rate limiting and allow backend to save messages
+const DELAY_BETWEEN_CALLS_MS = parseInt(process.env.CHATBOT_DELAY_MS || "2000", 10);
+
+function delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 const MAX_FOLLOWUP_TURNS = Math.max(
     1,
     parseInt(process.env.CHATBOT_MAX_FOLLOWUP_TURNS || "2", 10)
@@ -52,11 +59,26 @@ async function main() {
             responses.push(chat.answer);
             let threadId = chat.threadId;
 
+            // Wait for backend to save the message before sending follow-ups
+            await delay(DELAY_BETWEEN_CALLS_MS);
+
+            // Track previous responses to detect when chatbot stops progressing
+            let previousAnswer = chat.answer;
+            // Track follow-up history so GPT can give consistent answers
+            const followupHistory: string[] = [];
+
             for (let turn = 1; turn <= MAX_FOLLOWUP_TURNS; turn++) {
+                // Skip follow-up if response is empty or too short
+                if (!chat.answer || chat.answer.trim().length < 10) {
+                    console.log(`  [Skip] Response too short, skipping follow-ups`);
+                    break;
+                }
+
                 const decision = await decideFollowup({
                     input: row.input,
                     expected: row.expected,
                     latestReply: chat.answer,
+                    previousFollowups: followupHistory,
                 });
 
                 if (!decision.needsFollowup || !decision.followupMessage) {
@@ -69,6 +91,7 @@ async function main() {
 
                 // Save the follow-up message before the response
                 responses.push(`[Follow-up ${turn}]: ${decision.followupMessage}`);
+                followupHistory.push(decision.followupMessage);
 
                 chat = await sendFollowup(
                     decision.followupMessage,
@@ -79,6 +102,16 @@ async function main() {
                 if (chat.threadId) {
                     threadId = chat.threadId;
                 }
+
+                // Wait for backend to save the message before next follow-up
+                await delay(DELAY_BETWEEN_CALLS_MS);
+
+                // Stop if chatbot response hasn't changed (backend not progressing)
+                if (chat.answer === previousAnswer) {
+                    console.log(`  [Skip] Chatbot returned same response, stopping follow-ups`);
+                    break;
+                }
+                previousAnswer = chat.answer;
             }
 
             const actual = responses.join(RESPONSE_SEPARATOR);

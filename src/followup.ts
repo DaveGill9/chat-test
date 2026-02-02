@@ -16,8 +16,13 @@ export async function decideFollowup(opts: {
     input: string;
     expected: string;
     latestReply: string;
+    previousFollowups?: string[];
 }): Promise<FollowupDecision> {
-    const { input, expected, latestReply } = opts;
+    const { input, expected, latestReply, previousFollowups = [] } = opts;
+
+    const previousContext = previousFollowups.length > 0
+        ? `\n- Previous follow-up messages already sent: ${previousFollowups.map((f, i) => `\n  ${i + 1}. "${f}"`).join("")}`
+        : "";
 
     const prompt = `
 You are controlling a test of a chatbot.
@@ -25,7 +30,7 @@ You are controlling a test of a chatbot.
 We have:
 - User input: ${input}
 - Expected outcome (what the user ultimately wants): ${expected}
-- Chatbot reply: ${latestReply}
+- Chatbot reply: ${latestReply}${previousContext}
 
 Your job:
 1. Decide if the chatbot reply CLEARLY indicates it needs more information from the user
@@ -35,7 +40,9 @@ Your job:
    - The reply must be a STATEMENT providing information, NOT a question.
    - Example: If chatbot asks "Are you full-time or part-time?", reply "I am full-time." NOT "Can you clarify...?"
    - Keep it short and factual.
-3. If NO, set needsFollowup to false and followupMessage to null.
+   - IMPORTANT: Be CONSISTENT with any previous follow-ups. Do not contradict information already provided.
+   - Do NOT repeat information already given in previous follow-ups.
+3. If NO (or if the chatbot is not asking for new information), set needsFollowup to false and followupMessage to null.
 
 Return JSON ONLY:
 {
