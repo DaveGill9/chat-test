@@ -10,8 +10,11 @@ const MAX_FOLLOWUP_TURNS = Math.max(
     1,
     parseInt(process.env.CHATBOT_MAX_FOLLOWUP_TURNS || "2", 10)
 );
-const RESPONSE_SEPARATOR =
-    process.env.CHATBOT_RESPONSE_SEPARATOR || "\n---\n";
+// Parse escape sequences in the separator (env vars don't interpret \n)
+const rawSeparator = process.env.CHATBOT_RESPONSE_SEPARATOR || "\n---\n";
+const RESPONSE_SEPARATOR = rawSeparator
+    .replace(/\\n/g, "\n")
+    .replace(/\\t/g, "\t");
 
 const FILES_DIR = "files";
 
@@ -49,7 +52,7 @@ async function main() {
             responses.push(chat.answer);
             let threadId = chat.threadId;
 
-            for (let turn = 1; turn < MAX_FOLLOWUP_TURNS; turn++) {
+            for (let turn = 1; turn <= MAX_FOLLOWUP_TURNS; turn++) {
                 const decision = await decideFollowup({
                     input: row.input,
                     expected: row.expected,
@@ -63,6 +66,9 @@ async function main() {
                 console.log(
                     `  → Follow-up ${turn}: ${decision.followupMessage.substring(0, 50)}...`
                 );
+
+                // Save the follow-up message before the response
+                responses.push(`[Follow-up ${turn}]: ${decision.followupMessage}`);
 
                 chat = await sendFollowup(
                     decision.followupMessage,

@@ -30,8 +30,11 @@ We have:
 Your job:
 1. Decide if the chatbot reply CLEARLY indicates it needs more information from the user
    (e.g. it asks specific follow-up questions, says it cannot proceed without X, asks for clarification).
-2. If YES, propose a single, concise user reply that provides the missing info,
-   using the "expected" description to infer good values. Keep it short (one sentence or phrase).
+2. If YES, propose a single, concise user reply that DIRECTLY ANSWERS the chatbot's question.
+   - Use the "expected" description to infer appropriate values.
+   - The reply must be a STATEMENT providing information, NOT a question.
+   - Example: If chatbot asks "Are you full-time or part-time?", reply "I am full-time." NOT "Can you clarify...?"
+   - Keep it short and factual.
 3. If NO, set needsFollowup to false and followupMessage to null.
 
 Return JSON ONLY:

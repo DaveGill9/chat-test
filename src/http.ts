@@ -33,11 +33,16 @@ function parseResponse(text: string): ChatResponse {
         const threadId =
             json?.[THREAD_ID_FIELD] ?? json?.threadId;
 
+        // Debug: log what we're extracting
+        console.log(`  [DEBUG] Raw response keys: ${Object.keys(json).join(", ")}`);
+        console.log(`  [DEBUG] Looking for field "${ANSWER_FIELD}", found: ${typeof answer === "string" ? answer.substring(0, 80) + "..." : "NOT A STRING"}`);
+
         return {
             answer: typeof answer === "string" ? answer : JSON.stringify(json),
             threadId: typeof threadId === "string" ? threadId : undefined,
         };
     } catch {
+        console.log(`  [DEBUG] Failed to parse JSON, raw text: ${text.substring(0, 100)}...`);
         return { answer: text };
     }
 }
