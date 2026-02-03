@@ -2,7 +2,7 @@ import "dotenv/config";
 import fs from "fs";
 import path from "path";
 import { loadFile, writeResults } from "./file.ts";
-import { callEndpoint, sendFollowup, getExtras, generateUserId } from "./http.ts";
+import { callEndpoint, sendFollowup, getExtras } from "./http.ts";
 import { evaluate } from "./eval.ts";
 import { decideFollowup } from "./followup.ts";
 
@@ -54,11 +54,8 @@ async function main() {
         console.log(`Test ${row.id}: calling chatbot`);
 
         try {
-            const userId = generateUserId();
-            console.log(`  Using userId: ${userId}`);
-
             const responses: string[] = [];
-            let chat = await callEndpoint(row, userId);
+            let chat = await callEndpoint(row);
             responses.push(chat.answer);
             let threadId = chat.threadId;
 
@@ -98,7 +95,6 @@ async function main() {
                 chat = await sendFollowup(
                     decision.followupMessage,
                     threadId,
-                    userId,
                     getExtras(row)
                 );
                 responses.push(chat.answer);
