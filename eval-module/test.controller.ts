@@ -13,6 +13,7 @@ export class TestController {
         body: {
             message: string;
             threadId?: string;
+            [key: string]: unknown;
         }
     ) {
         return this.testService.handleSync(body);
