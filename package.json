@@ -4,7 +4,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "eval": "ts-node src/run.ts"
+        "eval": "ts-node src/run.ts",
+        "convert": "ts-node src/convert.ts"
     },
     "dependencies": {
         "@azure/identity": "^4.13.0",

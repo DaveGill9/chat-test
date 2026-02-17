@@ -3,6 +3,48 @@ import Papa from "papaparse";
 import XLSX from "xlsx";
 import type { EvalRow } from "./types.ts";
 
+export type RawRow = Record<string, unknown>;
+
+export function loadRawFile(path: string): RawRow[] {
+    const ext = path.toLowerCase().split(".").pop() || "";
+
+    if (ext === "xlsx" || ext === "xls") {
+        return loadXlsxRaw(path);
+    }
+
+    return loadCsvRaw(path);
+}
+
+function loadCsvRaw(path: string): RawRow[] {
+    const text = fs.readFileSync(path, "utf-8");
+    const result = Papa.parse(text, { header: true, skipEmptyLines: true });
+    if (result.errors.length > 0) {
+        throw new Error("CSV parse errors: " + JSON.stringify(result.errors));
+    }
+    return (result.data as RawRow[]).filter((r) => Object.keys(r).length > 0);
+}
+
+function loadXlsxRaw(path: string): RawRow[] {
+    const workbook = XLSX.readFile(path);
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) throw new Error("XLSX file has no sheets");
+    const worksheet = workbook.Sheets[sheetName];
+    return XLSX.utils.sheet_to_json(worksheet, { defval: "" }) as RawRow[];
+}
+
+export function writeRawFile(path: string, rows: RawRow[]): void {
+    const ext = path.toLowerCase().split(".").pop() || "";
+    if (ext === "xlsx" || ext === "xls") {
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.json_to_sheet(rows);
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+        XLSX.writeFile(workbook, path);
+        return;
+    }
+    const csv = Papa.unparse(rows);
+    fs.writeFileSync(path, csv);
+}
+
 export function loadFile(path: string): EvalRow[] {
     const ext = path.toLowerCase().split(".").pop() || "";
 
